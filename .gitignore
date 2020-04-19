@@ -1,0 +1,10 @@
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/CMakeFiles
+**/Makefile
+**/receiver
+**/data-*
+**/filter-*
+**/align-*
+**/filters.txt
+**/libdf
