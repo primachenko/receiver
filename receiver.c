@@ -60,6 +60,11 @@ char * receiver_stringize_state(receiver_state_e state)
 
 void receiver_destroy(receiver_t * r)
 {
+    if (!r)
+    {
+        RCVR_DBG("reciever not created");
+        return;
+    }
     r->state = RCVR_DESTROYING;
     RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
 
@@ -113,6 +118,7 @@ void receiver_destroy(receiver_t * r)
 int receiver_dump_init(receiver_t * r)
 {
     dump_create();
+    dump_fd_add("original",   FILE_ORIGINAL);;
     dump_fd_add("filter-50",  FILE_FILTER_50);
     dump_fd_add("filter-200", FILE_FILTER_200);
     dump_fd_add("filter-400", FILE_FILTER_400);
@@ -325,21 +331,23 @@ int receiver_loop(receiver_t * r)
         }
 
         r->samples_cnt++;
-
-#ifdef DEBUG_SOURCE
-        if (DEBUG_SOURCE_SIZE < r->samples_cnt)
+#ifdef SAMPLES_LIMIT
+        if (SAMPLES_LIMIT_SIZE < r->samples_cnt)
         {
             r->state = RCVR_STOPPED;
-            RCVR_DBG("all source samples was used");
+            RCVR_DBG("samples limit was reached");
             RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
             break;
         }
+#endif /* SAMPLES_LIMIT */
+#ifdef DEBUG_SOURCE
         if (0 != dump_dbg_source_get_sample(&r->samples[RCVR_SMPL_SOURCE]))
         {
             RCVR_ERR("can't get sample from dbg source");
             return -1;
         }
 #endif /* DEBUG_SOURCE */
+        dump_sample_by_desc("original", &r->samples[RCVR_SMPL_SOURCE]);
 
         r->samples[RCVR_SMPL_FILTERED_50HZ] = filter_apply(r->filter_50hz, r->samples[RCVR_SMPL_SOURCE]);
         dump_sample_by_desc("filter-50", &r->samples[RCVR_SMPL_FILTERED_50HZ]);
@@ -364,7 +372,7 @@ int receiver_loop(receiver_t * r)
         {
             if (0 != receiver_init_process(r))
             {
-                RCVR_ERR("can't get sample from dbg source");
+                RCVR_ERR("receiver init process failed");
                 return -1;
             }
 

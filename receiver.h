@@ -7,10 +7,11 @@
 #include "df.h"
 #include "detector.h"
 
-#ifdef DEBUG_SOURCE
-#define DEBUG_SOURCE_SIZE (1024*8)
-#endif /* DEBUG_SOURCE */
+#ifdef SAMPLES_LIMIT
+#define SAMPLES_LIMIT_SIZE (1024*8)
+#endif /* SAMPLES_LIMIT */
 
+#define FILE_ORIGINAL      "original"
 #define FILE_FILTER_50     "filter-50"
 #define FILE_FILTER_200    "filter-200"
 #define FILE_FILTER_400    "filter-400"
