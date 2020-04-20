@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8.11)
 project(receiver)
 
 add_subdirectory(libdf)
+add_subdirectory(libads1256)
 include_directories(libdf/include)
+include_directories(libads1256/include)
 add_definitions(-Wall)
 
 # add_definitions(-DDETECTOR_DEBUG)
@@ -22,3 +24,4 @@ set(SRC
 
 add_executable(${PROJECT_NAME} ${SRC})
 target_link_libraries(${PROJECT_NAME} df)
+target_link_libraries(${PROJECT_NAME} ads1256)

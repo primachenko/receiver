@@ -1,3 +1,6 @@
 [submodule "libdf"]
 	path = libdf
 	url = git@github.com:primachenko/libdf.git
+[submodule "libads1256"]
+	path = libads1256
+	url = git@github.com:primachenko/libads1256.git
