@@ -56,4 +56,12 @@
 
 #define QUEUE_ERR(__info__,...) { fprintf(stderr, "[QUEUE-ERR]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
 
+#if PAR_DEBUG | DEBUG_ALL
+    #define PAR_DBG(__info__,...) { fprintf(stderr, "[PAR-DBG]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
+#else
+    #define PAR_DBG(__info__,...)
+#endif /* PAR_DEBUG | DEBUG_ALL */
+
+#define PAR_ERR(__info__,...) { fprintf(stderr, "[PAR-ERR]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
+
 #endif /* DEBUG_H */

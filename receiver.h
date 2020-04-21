@@ -6,13 +6,15 @@
 
 #include "df.h"
 #include "detector.h"
-
 #ifndef DEBUG_SOURCE
-#include "ADS1256.h"
+#include <pthread.h>
+#include <sched.h>
+#include "parallel_input.h"
+#include "queue.h"
 #endif /* DEBUG_SOURCE */
 
 #ifdef SAMPLES_LIMIT
-#define SAMPLES_LIMIT_SIZE (1024*32)
+#define SAMPLES_LIMIT_SIZE (1024*64)
 #endif /* SAMPLES_LIMIT */
 
 #define FILE_ORIGINAL      "original"
@@ -70,7 +72,10 @@ typedef struct
 
     detector_t * detector_freq1;
     detector_t * detector_freq2;
-
+#ifndef DEBUG_SOURCE
+    pthread_t parallel_input_tid;
+    queue_t * queue;
+#endif /* DEBUG_SOURCE */
     double normalize_freq1;
     double normalize_freq2;
 

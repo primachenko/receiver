@@ -12,6 +12,8 @@ add_definitions(-Wall)
 # add_definitions(-DDUMP_DEBUG)
 # add_definitions(-DIMPORT_DEBUG)
 add_definitions(-DMAIN_DEBUG)
+# add_definitions(-DQUEUE_DEBUG)
+add_definitions(-DPAR_DEBUG)
 # add_definitions(-DDEBUG_ALL)
 
 # add_definitions(-DDEBUG_SOURCE)
@@ -23,8 +25,10 @@ set(SRC
     queue.c
     import.c
     detector.c
-    receiver.c)
+    receiver.c
+    parallel_input.c)
 
 add_executable(${PROJECT_NAME} ${SRC})
 target_link_libraries(${PROJECT_NAME} df)
 target_link_libraries(${PROJECT_NAME} ads1256)
+target_link_libraries(${PROJECT_NAME} pthread)

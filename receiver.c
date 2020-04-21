@@ -106,17 +106,15 @@ void receiver_destroy(receiver_t * r)
     }
 
     dump_destroy();
-
 #ifndef DEBUG_SOURCE
-    DEV_ModuleExit();
+    queue_destroy(r->queue);
+    if (r->parallel_input_tid)
+        pthread_join(r->parallel_input_tid, NULL);
+    parallel_input_deinit();
 #endif /* DEBUG_SOURCE */
-
-    if (r)
-    {
-        RCVR_DBG("receiver destroy");
-        free(r);
-        r = NULL;
-    }
+    RCVR_DBG("receiver destroy");
+    free(r);
+    r = NULL;
 }
 
 int receiver_dump_init(receiver_t * r)
@@ -246,16 +244,6 @@ int receiver_filters_init(receiver_t * r)
 
 int receiver_create(receiver_t ** rcvr)
 {
-#ifndef DEBUG_SOURCE
-    DEV_ModuleInit();
-    if (ADS1256_init())
-    {
-        RCVR_ERR("ads1256 init failed\n");
-        DEV_ModuleExit();
-        return -1;
-    }
-#endif /* DEBUG_SOURCE */
-
     receiver_t * r = calloc(1, sizeof(receiver_t));
     if (!r)
     {
@@ -283,6 +271,38 @@ int receiver_create(receiver_t ** rcvr)
         receiver_destroy(r);
         return -1;
     }
+
+#ifndef DEBUG_SOURCE
+    if (0 != queue_create(&r->queue))
+    {
+        RCVR_ERR("queue init failed");
+        receiver_destroy(r);
+        return -1;
+    }
+
+    if (0 != parallel_input_init())
+    {
+        RCVR_ERR("parallel input init failed");
+        receiver_destroy(r);
+        return -1;
+    }
+
+    if (0 != pthread_create(&r->parallel_input_tid, NULL, parallel_input_routine, r->queue))
+    {
+        RCVR_ERR("parallel input thread create failed");
+        receiver_destroy(r);
+        return -1;
+    }
+
+     struct sched_param params;
+     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+     if (0 != pthread_setschedparam(r->parallel_input_tid, SCHED_FIFO, &params))
+    {
+        RCVR_ERR("set realrime prio for parallel input thread failed");
+        receiver_destroy(r);
+        return -1;
+    }
+#endif /* DEBUG_SOURCE */
 
     r->state = RCVR_INIT;
     RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
@@ -344,7 +364,6 @@ int receiver_loop(receiver_t * r)
             sleep(1);
         }
 
-        r->samples_cnt++;
 #ifdef SAMPLES_LIMIT
         if (SAMPLES_LIMIT_SIZE < r->samples_cnt)
         {
@@ -361,8 +380,15 @@ int receiver_loop(receiver_t * r)
             return -1;
         }
 #else
-        r->samples[RCVR_SMPL_SOURCE] = ADS1256_GetValueRDATAC() * 5.0/0x7fffff;
+        r->samples[RCVR_SMPL_SOURCE] = queue_pop_sample(r->queue);
+        if (FP_NAN == r->samples[RCVR_SMPL_SOURCE])
+        {
+            RCVR_DBG("sample %u is NaN, wait new samples", r->samples_cnt);
+            continue;
+        }
 #endif /* DEBUG_SOURCE */
+        r->samples_cnt++;
+
         dump_sample_by_desc("original", &r->samples[RCVR_SMPL_SOURCE]);
 
         r->samples[RCVR_SMPL_FILTERED_50HZ] = filter_apply(r->filter_50hz, r->samples[RCVR_SMPL_SOURCE]);
