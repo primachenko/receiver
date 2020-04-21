@@ -20,6 +20,7 @@ add_definitions(-DSAMPLES_LIMIT)
 set(SRC
     main.c
     dump.c
+    queue.c
     import.c
     detector.c
     receiver.c)
