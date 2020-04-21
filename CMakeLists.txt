@@ -14,7 +14,7 @@ add_definitions(-Wall)
 add_definitions(-DMAIN_DEBUG)
 # add_definitions(-DDEBUG_ALL)
 
-add_definitions(-DDEBUG_SOURCE)
+# add_definitions(-DDEBUG_SOURCE)
 add_definitions(-DSAMPLES_LIMIT)
 
 set(SRC

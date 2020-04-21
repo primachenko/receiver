@@ -7,8 +7,12 @@
 #include "df.h"
 #include "detector.h"
 
+#ifndef DEBUG_SOURCE
+#include "ADS1256.h"
+#endif /* DEBUG_SOURCE */
+
 #ifdef SAMPLES_LIMIT
-#define SAMPLES_LIMIT_SIZE (1024*8)
+#define SAMPLES_LIMIT_SIZE (1024*32)
 #endif /* SAMPLES_LIMIT */
 
 #define FILE_ORIGINAL      "original"
@@ -20,12 +24,12 @@
 #define FILE_DATA_RECIEVED "data-received"
 #define FILE_FILTERS_PARAM "filters.txt"
 
-#define ALIGN_LEN (100)
+#define ALIGN_LEN (300)
 #define PULSES_FOR_CALC_NORM_COEF (2)
-#define PULSES_FOR_FILTER_STABILIZATION (1)
-#define SAMPLES_PER_BIT_DEFAULT (600)
+#define PULSES_FOR_FILTER_STABILIZATION (2)
+#define SAMPLES_PER_BIT_DEFAULT (1200)
 #define HIGH_TRASHHOLD_DEFAULT (0.7)
-#define LOW_TRASHHOLD_DEFAULT (0.7)
+#define LOW_TRASHHOLD_DEFAULT (0.3)
 
 typedef enum
 {

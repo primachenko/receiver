@@ -107,6 +107,10 @@ void receiver_destroy(receiver_t * r)
 
     dump_destroy();
 
+#ifndef DEBUG_SOURCE
+    DEV_ModuleExit();
+#endif /* DEBUG_SOURCE */
+
     if (r)
     {
         RCVR_DBG("receiver destroy");
@@ -242,6 +246,16 @@ int receiver_filters_init(receiver_t * r)
 
 int receiver_create(receiver_t ** rcvr)
 {
+#ifndef DEBUG_SOURCE
+    DEV_ModuleInit();
+    if (ADS1256_init())
+    {
+        RCVR_ERR("ads1256 init failed\n");
+        DEV_ModuleExit();
+        return -1;
+    }
+#endif /* DEBUG_SOURCE */
+
     receiver_t * r = calloc(1, sizeof(receiver_t));
     if (!r)
     {
@@ -346,6 +360,8 @@ int receiver_loop(receiver_t * r)
             RCVR_ERR("can't get sample from dbg source");
             return -1;
         }
+#else
+        r->samples[RCVR_SMPL_SOURCE] = ADS1256_GetValueRDATAC() * 5.0/0x7fffff;
 #endif /* DEBUG_SOURCE */
         dump_sample_by_desc("original", &r->samples[RCVR_SMPL_SOURCE]);
 
@@ -368,24 +384,24 @@ int receiver_loop(receiver_t * r)
         r->samples[RCVR_SMPL_ALIGNED_FREQ2] = filter_apply(r->align_freq2, r->samples[RCVR_SMPL_ABS_FREQ2]);
 
 
-        if (RCVR_INIT == r->state || RCVR_RESUME == r->state)
-        {
-            if (0 != receiver_init_process(r))
-            {
-                RCVR_ERR("receiver init process failed");
-                return -1;
-            }
+        // if (RCVR_INIT == r->state || RCVR_RESUME == r->state)
+        // {
+        //     if (0 != receiver_init_process(r))
+        //     {
+        //         RCVR_ERR("receiver init process failed");
+        //         return -1;
+        //     }
 
-            continue;;
-        }
+        //     continue;;
+        // }
 
-        r->samples[RCVR_SMPL_ALIGNED_FREQ1] /= r->normalize_freq1;
-        r->samples[RCVR_SMPL_ALIGNED_FREQ2] /= r->normalize_freq2;
+        // r->samples[RCVR_SMPL_ALIGNED_FREQ1] /= r->normalize_freq1;
+        // r->samples[RCVR_SMPL_ALIGNED_FREQ2] /= r->normalize_freq2;
 
         dump_sample_by_desc("align-200", &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         dump_sample_by_desc("align-400", &r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 
-        detector_detect(r->detector_freq1, &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
+        // detector_detect(r->detector_freq1, &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         // detector_detect(r->detector_freq2, &r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
     }
 
