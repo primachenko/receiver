@@ -115,7 +115,7 @@ static int import_add_entry(import_t       * i,
     }
 
     i->entries[i->count] = e;
-    IMP_DBG("entry[%lu] '%s' was added", i->count, e->desc);
+    IMP_DBG("entry[%u] '%s' was added", i->count, e->desc);
     i->count++;
     return 0;
 }
@@ -131,12 +131,12 @@ static void safe_free(void * p)
 
 void import_destroy(import_t * i)
 {
-    IMP_DBG("import has %lu entries, deleting", i->count);
+    IMP_DBG("import has %u entries, deleting", i->count);
     for (int k = 0; k < i->count; ++k)
     {
         import_entry_t * e = i->entries[k];
         if (!e) continue;
-        IMP_DBG("entry[%lu] '%s' deleting", i->count, e->desc);
+        IMP_DBG("entry[%u] '%s' deleting", i->count, e->desc);
         safe_free(e->a);
         safe_free(e->b);
         safe_free(e);
