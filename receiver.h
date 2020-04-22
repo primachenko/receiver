@@ -21,6 +21,8 @@
 #define FILE_FILTER_50  "filter-50"
 #define FILE_FILTER_200 "filter-200"
 #define FILE_FILTER_400 "filter-400"
+#define FILE_FABS_200   "fabs-200"
+#define FILE_FABS_400   "fabs-400"
 #define FILE_ALIGN_200  "align-200"
 #define FILE_ALIGN_400  "align-400"
 #define FILE_DETECTOR   "detector"

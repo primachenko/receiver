@@ -124,6 +124,8 @@ int receiver_dump_init(receiver_t * r)
     dump_fd_add("filter-50",  FILE_FILTER_50);
     dump_fd_add("filter-200", FILE_FILTER_200);
     dump_fd_add("filter-400", FILE_FILTER_400);
+    dump_fd_add("fabs-200",   FILE_FABS_200);
+    dump_fd_add("fabs-400",   FILE_FABS_400);
     dump_fd_add("align-200",  FILE_ALIGN_200);
     dump_fd_add("align-400",  FILE_ALIGN_400);
     dump_fd_add("detector",   FILE_DETECTOR);
@@ -424,9 +426,9 @@ int receiver_loop(receiver_t * r)
         dump_sample_by_desc("filter-400", r->samples[RCVR_SMPL_FILTERED_FREQ2]);
 
         r->samples[RCVR_SMPL_ABS_FREQ1] = fabs(r->samples[RCVR_SMPL_FILTERED_FREQ1]);
-        // dump_sample_by_desc("abs-200", r->samples[RCVR_SMPL_FILTERED_FREQ1])
+        dump_sample_by_desc("fabs-200", r->samples[RCVR_SMPL_ABS_FREQ1]);
         r->samples[RCVR_SMPL_ABS_FREQ2] = fabs(r->samples[RCVR_SMPL_FILTERED_FREQ2]);
-        // dump_sample_by_desc("abs-400", r->samples[RCVR_SMPL_FILTERED_FREQ2])
+        dump_sample_by_desc("fabs-400", r->samples[RCVR_SMPL_ABS_FREQ2]);
 
 
         r->samples[RCVR_SMPL_ALIGNED_FREQ1] = filter_apply(r->align_freq1, r->samples[RCVR_SMPL_ABS_FREQ1]);
