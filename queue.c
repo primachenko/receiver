@@ -86,7 +86,7 @@ double queue_pop_sample(queue_t * q)
         QUEUE_DBG("queue is empty");
         pthread_mutex_unlock(&q->lock);
         usleep(QUEUE_DELAY_TIME_US);
-        return FP_NAN;
+        return FP_INFINITE;
     }
 
     double val = q->samples[q->out_counter];

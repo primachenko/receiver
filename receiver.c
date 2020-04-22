@@ -365,7 +365,7 @@ int receiver_loop(receiver_t * r)
         }
 
 #ifdef SAMPLES_LIMIT
-        if (SAMPLES_LIMIT_SIZE < r->samples_cnt)
+        if (SAMPLES_LIMIT_SIZE <= r->samples_cnt)
         {
             r->state = RCVR_STOPPED;
             RCVR_DBG("samples limit was reached");
@@ -381,7 +381,7 @@ int receiver_loop(receiver_t * r)
         }
 #else
         r->samples[RCVR_SMPL_SOURCE] = queue_pop_sample(r->queue);
-        if (FP_NAN == r->samples[RCVR_SMPL_SOURCE])
+        if (FP_INFINITE == r->samples[RCVR_SMPL_SOURCE])
         {
             RCVR_DBG("sample %u is NaN, wait new samples", r->samples_cnt);
             continue;
