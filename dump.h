@@ -29,7 +29,7 @@ int dump_dbg_source_get_sample(double * sample);
 #endif /* DEBUG_SOURCE */
 int dump_create();
 int dump_fd_add(const char * desc, const char * path);
-int dump_sample_by_desc(const char * desc, double * sample);
+int dump_sample_by_desc(const char * desc, double sample);
 int dump_fd_remove(const char * desc);
 void dump_destroy();
 

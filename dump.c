@@ -187,16 +187,11 @@ int dump_fd_remove(const char * desc)
     return 0;
 }
 
-int dump_sample_by_desc(const char * desc, double * sample)
+int dump_sample_by_desc(const char * desc, double sample)
 {
     if (!desc)
     {
         DMP_ERR("desc arg is NULL");
-        return -1;
-    }
-    if (!sample)
-    {
-        DMP_ERR("sample arg is NULL");
         return -1;
     }
 
@@ -206,7 +201,7 @@ int dump_sample_by_desc(const char * desc, double * sample)
         return 0;
     }
 
-    if (1 != fwrite(sample, sizeof(double), 1, d->fds[idx]->fd))
+    if (1 != fwrite(&sample, sizeof(double), 1, d->fds[idx]->fd))
     {
         DMP_ERR("fwrite in '%s' failed", d->fds[idx]->desc);
         return -1;

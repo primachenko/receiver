@@ -412,21 +412,21 @@ int receiver_loop(receiver_t * r)
 #endif /* DEBUG_SOURCE */
         r->samples_cnt++;
 
-        dump_sample_by_desc("original", &r->samples[RCVR_SMPL_SOURCE]);
+        dump_sample_by_desc("original", r->samples[RCVR_SMPL_SOURCE]);
 
         r->samples[RCVR_SMPL_FILTERED_50HZ] = filter_apply(r->filter_50hz, r->samples[RCVR_SMPL_SOURCE]);
-        dump_sample_by_desc("filter-50", &r->samples[RCVR_SMPL_FILTERED_50HZ]);
+        dump_sample_by_desc("filter-50", r->samples[RCVR_SMPL_FILTERED_50HZ]);
 
         r->samples[RCVR_SMPL_FILTERED_FREQ1] = filter_apply(r->filter_freq1, r->samples[RCVR_SMPL_FILTERED_50HZ]);
-        dump_sample_by_desc("filter-200", &r->samples[RCVR_SMPL_FILTERED_FREQ1]);
+        dump_sample_by_desc("filter-200", r->samples[RCVR_SMPL_FILTERED_FREQ1]);
 
         r->samples[RCVR_SMPL_FILTERED_FREQ2] = filter_apply(r->filter_freq2, r->samples[RCVR_SMPL_FILTERED_50HZ]);
-        dump_sample_by_desc("filter-400", &r->samples[RCVR_SMPL_FILTERED_FREQ2]);
+        dump_sample_by_desc("filter-400", r->samples[RCVR_SMPL_FILTERED_FREQ2]);
 
         r->samples[RCVR_SMPL_ABS_FREQ1] = fabs(r->samples[RCVR_SMPL_FILTERED_FREQ1]);
-        // dump_sample_by_desc("abs-200", &r->samples[RCVR_SMPL_FILTERED_FREQ1])
+        // dump_sample_by_desc("abs-200", r->samples[RCVR_SMPL_FILTERED_FREQ1])
         r->samples[RCVR_SMPL_ABS_FREQ2] = fabs(r->samples[RCVR_SMPL_FILTERED_FREQ2]);
-        // dump_sample_by_desc("abs-400", &r->samples[RCVR_SMPL_FILTERED_FREQ2])
+        // dump_sample_by_desc("abs-400", r->samples[RCVR_SMPL_FILTERED_FREQ2])
 
 
         r->samples[RCVR_SMPL_ALIGNED_FREQ1] = filter_apply(r->align_freq1, r->samples[RCVR_SMPL_ABS_FREQ1]);
@@ -447,8 +447,8 @@ int receiver_loop(receiver_t * r)
         r->samples[RCVR_SMPL_ALIGNED_FREQ1] /= r->normalize_freq1;
         r->samples[RCVR_SMPL_ALIGNED_FREQ2] /= r->normalize_freq2;
 #endif /* DETECTOR_INTEG */
-        dump_sample_by_desc("align-200", &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
-        dump_sample_by_desc("align-400", &r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+        dump_sample_by_desc("align-200", r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
+        dump_sample_by_desc("align-400", r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #ifdef DETECTOR_INTEG
         detector_detect_by_integr(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         detector_detect_by_integr(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
