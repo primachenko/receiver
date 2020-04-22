@@ -93,7 +93,7 @@ void receiver_destroy(receiver_t * r)
         RCVR_DBG("align freq2 destroy");
         filter_destroy(r->align_freq2);
     }
-
+#if defined DETECTOR_INTEG || defined DETECTOR_PERIOD
     if (r->detector_freq1)
     {
         RCVR_DBG("detector freq1 destroy");
@@ -104,7 +104,7 @@ void receiver_destroy(receiver_t * r)
         RCVR_DBG("detector freq2 destroy");
         detector_destroy(r->detector_freq2);
     }
-
+#endif /* DETECTOR_INTEG || DETECTOR_PERIOD */
     dump_destroy();
 #ifndef DEBUG_SOURCE
     queue_destroy(r->queue);
@@ -133,28 +133,51 @@ int receiver_dump_init(receiver_t * r)
 
 int receiver_detectors_init(receiver_t * r)
 {
-    r->detector_freq1 = detector_create(SAMPLES_PER_BIT_DEFAULT, HIGH_TRASHHOLD_DEFAULT, LOW_TRASHHOLD_DEFAULT);
+#ifdef DETECTOR_INTEG
+    r->detector_freq1 = detector_by_integr_create(SAMPLES_PER_BIT_DEFAULT,
+                                                  HIGH_TRASHHOLD_DEFAULT_INTEG,
+                                                  LOW_TRASHHOLD_DEFAULT_INTEG);
     if (!r->detector_freq1)
     {
         RCVR_ERR("creating detector for freq1 failed");
         return -1;
     }
-
-    detector_set_cb(r->detector_freq1, DETECTOR_HIGH_CB, dt_high_cb_freq1);
-    detector_set_cb(r->detector_freq1, DETECTOR_LOW_CB, dt_low_cb_freq1);
-    detector_set_cb(r->detector_freq1, DETECTOR_UNDEF_CB, dt_undef_cb_freq1);
-
-    r->detector_freq2 = detector_create(SAMPLES_PER_BIT_DEFAULT, HIGH_TRASHHOLD_DEFAULT, LOW_TRASHHOLD_DEFAULT);
+    r->detector_freq2 = detector_by_integr_create(SAMPLES_PER_BIT_DEFAULT,
+                                                  HIGH_TRASHHOLD_DEFAULT_INTEG,
+                                                  LOW_TRASHHOLD_DEFAULT_INTEG);
     if (!r->detector_freq2)
     {
         RCVR_ERR("creating detector for freq2 failed");
         return -1;
     }
-
+#elif defined DETECTOR_PERIOD
+    r->detector_freq1 = detector_by_period(HIGH_TRASHHOLD_DEFAULT_PERIOD,
+                                           LOW_TRASHHOLD_DEFAULT_PERIOD,
+                                           PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ1,
+                                           AVG_PERIOD_FREQ1);
+    if (!r->detector_freq1)
+    {
+        RCVR_ERR("creating detector for freq1 failed");
+        return -1;
+    }
+    r->detector_freq2 = detector_by_period(HIGH_TRASHHOLD_DEFAULT_PERIOD,
+                                           LOW_TRASHHOLD_DEFAULT_PERIOD,
+                                           PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ2,
+                                           AVG_PERIOD_FREQ2);
+    if (!r->detector_freq2)
+    {
+        RCVR_ERR("creating detector for freq2 failed");
+        return -1;
+    }
+#endif
+#if defined DETECTOR_INTEG || defined DETECTOR_PERIOD
+    detector_set_cb(r->detector_freq1, DETECTOR_HIGH_CB, dt_high_cb_freq1);
+    detector_set_cb(r->detector_freq1, DETECTOR_LOW_CB, dt_low_cb_freq1);
+    detector_set_cb(r->detector_freq1, DETECTOR_UNDEF_CB, dt_undef_cb_freq1);
     detector_set_cb(r->detector_freq2, DETECTOR_HIGH_CB, dt_high_cb_freq2);
     detector_set_cb(r->detector_freq2, DETECTOR_LOW_CB, dt_low_cb_freq2);
     detector_set_cb(r->detector_freq2, DETECTOR_UNDEF_CB, dt_undef_cb_freq2);
-
+#endif /* DETECTOR_INTEG || DETECTOR_PERIOD */
     return 0;
 }
 
@@ -271,7 +294,7 @@ int receiver_create(receiver_t ** rcvr)
         receiver_destroy(r);
         return -1;
     }
-
+    RCVR_DBG("detectors init success");
 #ifndef DEBUG_SOURCE
     if (0 != queue_create(&r->queue))
     {
@@ -383,7 +406,7 @@ int receiver_loop(receiver_t * r)
         r->samples[RCVR_SMPL_SOURCE] = queue_pop_sample(r->queue);
         if (FP_INFINITE == r->samples[RCVR_SMPL_SOURCE])
         {
-            RCVR_DBG("sample %u is NaN, wait new samples", r->samples_cnt);
+            RCVR_DBG("sample %llu is INF, wait new samples", r->samples_cnt);
             continue;
         }
 #endif /* DEBUG_SOURCE */
@@ -409,26 +432,31 @@ int receiver_loop(receiver_t * r)
         r->samples[RCVR_SMPL_ALIGNED_FREQ1] = filter_apply(r->align_freq1, r->samples[RCVR_SMPL_ABS_FREQ1]);
         r->samples[RCVR_SMPL_ALIGNED_FREQ2] = filter_apply(r->align_freq2, r->samples[RCVR_SMPL_ABS_FREQ2]);
 
+#ifdef DETECTOR_INTEG
+        if (RCVR_INIT == r->state || RCVR_RESUME == r->state)
+        {
+            if (0 != receiver_init_process(r))
+            {
+                RCVR_ERR("receiver init process failed");
+                return -1;
+            }
 
-        // if (RCVR_INIT == r->state || RCVR_RESUME == r->state)
-        // {
-        //     if (0 != receiver_init_process(r))
-        //     {
-        //         RCVR_ERR("receiver init process failed");
-        //         return -1;
-        //     }
+            continue;;
+        }
 
-        //     continue;;
-        // }
-
-        // r->samples[RCVR_SMPL_ALIGNED_FREQ1] /= r->normalize_freq1;
-        // r->samples[RCVR_SMPL_ALIGNED_FREQ2] /= r->normalize_freq2;
-
+        r->samples[RCVR_SMPL_ALIGNED_FREQ1] /= r->normalize_freq1;
+        r->samples[RCVR_SMPL_ALIGNED_FREQ2] /= r->normalize_freq2;
+#endif /* DETECTOR_INTEG */
         dump_sample_by_desc("align-200", &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         dump_sample_by_desc("align-400", &r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
-
-        // detector_detect(r->detector_freq1, &r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
-        // detector_detect(r->detector_freq2, &r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+#ifdef DETECTOR_INTEG
+        detector_detect_by_integr(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
+        detector_detect_by_integr(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+#endif /* DETECTOR_INTEGR */
+#ifdef DETECTOR_PERIOD
+        // detector_detect_by_period(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
+        detector_detect_by_period(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+#endif /* DETECTOR_PERIOD */
     }
 
     return 0;
