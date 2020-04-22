@@ -126,7 +126,7 @@ int receiver_dump_init(receiver_t * r)
     dump_fd_add("filter-400", FILE_FILTER_400);
     dump_fd_add("align-200",  FILE_ALIGN_200);
     dump_fd_add("align-400",  FILE_ALIGN_400);
-    dump_fd_add("received",   FILE_DATA_RECIEVED);
+    dump_fd_add("detector",   FILE_DETECTOR);
 
     return 0;
 }

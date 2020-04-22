@@ -17,13 +17,14 @@
 #define SAMPLES_LIMIT_SIZE (1024*64)
 #endif /* SAMPLES_LIMIT */
 
-#define FILE_ORIGINAL      "original"
-#define FILE_FILTER_50     "filter-50"
-#define FILE_FILTER_200    "filter-200"
-#define FILE_FILTER_400    "filter-400"
-#define FILE_ALIGN_200     "align-200"
-#define FILE_ALIGN_400     "align-400"
-#define FILE_DATA_RECIEVED "data-received"
+#define FILE_ORIGINAL   "original"
+#define FILE_FILTER_50  "filter-50"
+#define FILE_FILTER_200 "filter-200"
+#define FILE_FILTER_400 "filter-400"
+#define FILE_ALIGN_200  "align-200"
+#define FILE_ALIGN_400  "align-400"
+#define FILE_DETECTOR   "detector"
+
 #define FILE_FILTERS_PARAM "filters.txt"
 
 #define ALIGN_LEN (100)

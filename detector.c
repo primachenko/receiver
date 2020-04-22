@@ -4,6 +4,7 @@
 
 #include "detector.h"
 #include "debug.h"
+#include "dump.h"
 
 detector_t * detector_by_integr_create(int    spb,
                                        double one_treshhold,
@@ -114,6 +115,8 @@ void detector_detect_by_integr(detector_t * d, double sample)
         if (d->storage >= d->high_lvl)
         {
             DTCT_DBG("detected high");
+            double val = DOUBLE_LOGIC_1;
+            dump_sample_by_desc("detector", &val);
             if (d->recv_high_cb)
             {
                 DTCT_DBG("calling recv_high_cb");
@@ -123,6 +126,8 @@ void detector_detect_by_integr(detector_t * d, double sample)
         else if (d->storage <= d->low_lvl)
         {
             DTCT_DBG("detected low");
+            double val = DOUBLE_LOGIC_0;
+            dump_sample_by_desc("detector", &val);
             if (d->recv_low_cb)
             {
                 DTCT_DBG("calling recv_low_cb");
@@ -132,6 +137,8 @@ void detector_detect_by_integr(detector_t * d, double sample)
         else
         {
             DTCT_DBG("detected undef");
+            double val = DOUBLE_LOGIC_UNDEF;
+            dump_sample_by_desc("detector", &val);
             if (d->recv_undef_cb)
             {
                 DTCT_DBG("calling recv_undef_cb");
@@ -154,7 +161,11 @@ void detector_detect_by_period(detector_t * d, double sample)
             d->samples_cnt = 0;
             return;
         }
+        d->prev_switch = d->samples_cnt;
         d->state = DETECTOR_SEARCH_HIGH;
+        double val = DOUBLE_LOGIC_UNDEF;
+        for (int j = 0; j < d->prev_switch; ++j)
+            dump_sample_by_desc("detector", &val);
         DTCT_DBG("detector init done, align %f", d->align);
     }
 
@@ -176,7 +187,10 @@ void detector_detect_by_period(detector_t * d, double sample)
             {
                 for (int i = 0; i < len/d->avg_period; ++i)
                 {
-                    DTCT_DBG("detected high");
+                    DTCT_DBG("detected high, from %d to %d", d->prev_switch, d->samples_cnt);
+                    double val = DOUBLE_LOGIC_1;
+                    for (int j = 0; j < len; ++j)
+                        dump_sample_by_desc("detector", &val);
                     if (d->recv_high_cb)
                     {
                         DTCT_DBG("calling recv_high_cb");
@@ -186,7 +200,10 @@ void detector_detect_by_period(detector_t * d, double sample)
             }
             else
             {
-                DTCT_DBG("detected undef");
+                DTCT_DBG("detected undef, from %d to %d", d->prev_switch, d->samples_cnt);
+                double val = DOUBLE_LOGIC_UNDEF;
+                for (int j = 0; j < len; ++j)
+                    dump_sample_by_desc("detector", &val);
                 if (d->recv_undef_cb)
                 {
                     DTCT_DBG("calling recv_undef_cb");
@@ -207,7 +224,10 @@ void detector_detect_by_period(detector_t * d, double sample)
             {
                 for (int i = 0; i < len/d->avg_period; ++i)
                 {
-                    DTCT_DBG("detected low");
+                    DTCT_DBG("detected low, from %d to %d", d->prev_switch, d->samples_cnt);
+                    double val = DOUBLE_LOGIC_0;
+                    for (int j = 0; j < len; ++j)
+                        dump_sample_by_desc("detector", &val);
                     if (d->recv_low_cb)
                     {
                         DTCT_DBG("calling recv_low_cb");
@@ -217,7 +237,10 @@ void detector_detect_by_period(detector_t * d, double sample)
             }
             else
             {
-                DTCT_DBG("detected undef");
+                DTCT_DBG("detected undef, from %d to %d", d->prev_switch, d->samples_cnt);
+                double val = DOUBLE_LOGIC_UNDEF;
+                for (int j = 0; j < len; ++j)
+                    dump_sample_by_desc("detector", &val);
                 if (d->recv_undef_cb)
                 {
                     DTCT_DBG("calling recv_undef_cb");
