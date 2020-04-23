@@ -19,6 +19,8 @@ add_definitions(-DDEBUG_ALL)
 add_definitions(-DDETECTOR_PERIOD)
 # add_definitions(-DDETECTOR_INTEG)
 
+add_definitions(-DDAC_SHIFT)
+
 # add_definitions(-DDEBUG_SOURCE)
 add_definitions(-DSAMPLES_LIMIT)
 

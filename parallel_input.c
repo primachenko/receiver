@@ -1,11 +1,17 @@
 #include "parallel_input.h"
 #include "ADS1256.h"
+#ifdef DAC_SHIFT
+#include "DAC8532.h"
+#endif /* DAC_SHIFT */
 #include "queue.h"
 #include "debug.h"
 
 int parallel_input_init()
 {
     DEV_ModuleInit();
+#ifdef DAC_SHIFT
+    DAC8532_Set_Voltage(DAC8532_CHANNEL_A, DAC8532_VREF/2);
+#endif /* DAC_SHIFT */
     if (ADS1256_init())
     {
         PAR_ERR("ads1256 init failed\n");
