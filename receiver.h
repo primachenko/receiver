@@ -17,15 +17,16 @@
 #define SAMPLES_LIMIT_SIZE (1024*64)
 #endif /* SAMPLES_LIMIT */
 
-#define FILE_ORIGINAL   "original"
-#define FILE_FILTER_50  "filter-50"
-#define FILE_FILTER_200 "filter-200"
-#define FILE_FILTER_400 "filter-400"
-#define FILE_FABS_200   "fabs-200"
-#define FILE_FABS_400   "fabs-400"
-#define FILE_ALIGN_200  "align-200"
-#define FILE_ALIGN_400  "align-400"
-#define FILE_DETECTOR   "detector"
+#define FILE_ORIGINAL     "original"
+#define FILE_FILTER_50    "filter-50"
+#define FILE_FILTER_200   "filter-200"
+#define FILE_FILTER_400   "filter-400"
+#define FILE_FABS_200     "fabs-200"
+#define FILE_FABS_400     "fabs-400"
+#define FILE_ALIGN_200    "align-200"
+#define FILE_ALIGN_400    "align-400"
+#define FILE_DETECTOR_200 "detector-200"
+#define FILE_DETECTOR_400 "detector-400"
 
 #define FILE_FILTERS_PARAM "filters.txt"
 
@@ -36,10 +37,11 @@
 #define HIGH_TRASHHOLD_DEFAULT_INTEG (0.7)
 #define LOW_TRASHHOLD_DEFAULT_INTEG (0.3)
 
-#define HIGH_TRASHHOLD_DEFAULT_PERIOD (0.6)
-#define LOW_TRASHHOLD_DEFAULT_PERIOD (0.4)
-#define AVG_PERIOD_FREQ1 (1200)
-#define AVG_PERIOD_FREQ2 (1200)
+#define ALIGN_TRASHHOLD (5.0)
+#define HIGH_TRASHHOLD_DEFAULT_PERIOD (0.3)
+#define LOW_TRASHHOLD_DEFAULT_PERIOD (0.2)
+#define AVG_PERIOD_FREQ1 (1000)
+#define AVG_PERIOD_FREQ2 (1000)
 
 typedef enum
 {

@@ -8,6 +8,7 @@
 **/align-*
 **/original
 **/detector
+**/detector-*
 **/fabs*
 **/filters.txt
 **/libdf

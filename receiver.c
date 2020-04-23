@@ -120,15 +120,16 @@ void receiver_destroy(receiver_t * r)
 int receiver_dump_init(receiver_t * r)
 {
     dump_create();
-    dump_fd_add("original",   FILE_ORIGINAL);;
-    dump_fd_add("filter-50",  FILE_FILTER_50);
-    dump_fd_add("filter-200", FILE_FILTER_200);
-    dump_fd_add("filter-400", FILE_FILTER_400);
-    dump_fd_add("fabs-200",   FILE_FABS_200);
-    dump_fd_add("fabs-400",   FILE_FABS_400);
-    dump_fd_add("align-200",  FILE_ALIGN_200);
-    dump_fd_add("align-400",  FILE_ALIGN_400);
-    dump_fd_add("detector",   FILE_DETECTOR);
+    dump_fd_add("original",     FILE_ORIGINAL);;
+    dump_fd_add("filter-50",    FILE_FILTER_50);
+    dump_fd_add("filter-200",   FILE_FILTER_200);
+    dump_fd_add("filter-400",   FILE_FILTER_400);
+    dump_fd_add("fabs-200",     FILE_FABS_200);
+    dump_fd_add("fabs-400",     FILE_FABS_400);
+    dump_fd_add("align-200",    FILE_ALIGN_200);
+    dump_fd_add("align-400",    FILE_ALIGN_400);
+    dump_fd_add("detector-200", FILE_DETECTOR_200);
+    dump_fd_add("detector-400", FILE_DETECTOR_400);
 
     return 0;
 }
@@ -153,19 +154,23 @@ int receiver_detectors_init(receiver_t * r)
         return -1;
     }
 #elif defined DETECTOR_PERIOD
-    r->detector_freq1 = detector_by_period(HIGH_TRASHHOLD_DEFAULT_PERIOD,
-                                           LOW_TRASHHOLD_DEFAULT_PERIOD,
-                                           PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ1,
-                                           AVG_PERIOD_FREQ1);
+    r->detector_freq1 = detector_by_period_create("detector-200",
+                                                  HIGH_TRASHHOLD_DEFAULT_PERIOD,
+                                                  LOW_TRASHHOLD_DEFAULT_PERIOD,
+                                                  ALIGN_TRASHHOLD,
+                                                  PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ1,
+                                                  AVG_PERIOD_FREQ1);
     if (!r->detector_freq1)
     {
         RCVR_ERR("creating detector for freq1 failed");
         return -1;
     }
-    r->detector_freq2 = detector_by_period(HIGH_TRASHHOLD_DEFAULT_PERIOD,
-                                           LOW_TRASHHOLD_DEFAULT_PERIOD,
-                                           PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ2,
-                                           AVG_PERIOD_FREQ2);
+    r->detector_freq2 = detector_by_period_create("detector-400",
+                                                  HIGH_TRASHHOLD_DEFAULT_PERIOD,
+                                                  LOW_TRASHHOLD_DEFAULT_PERIOD,
+                                                  ALIGN_TRASHHOLD,
+                                                  PULSES_FOR_CALC_NORM_COEF*AVG_PERIOD_FREQ2,
+                                                  AVG_PERIOD_FREQ2);
     if (!r->detector_freq2)
     {
         RCVR_ERR("creating detector for freq2 failed");
@@ -390,7 +395,7 @@ int receiver_loop(receiver_t * r)
         }
 
 #ifdef SAMPLES_LIMIT
-        if (SAMPLES_LIMIT_SIZE <= r->samples_cnt)
+        if (QUEUE_SAMPLES_LEN_MAX <= r->samples_cnt)
         {
             r->state = RCVR_STOPPED;
             RCVR_DBG("samples limit was reached");
@@ -456,7 +461,7 @@ int receiver_loop(receiver_t * r)
         detector_detect_by_integr(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #endif /* DETECTOR_INTEGR */
 #ifdef DETECTOR_PERIOD
-        // detector_detect_by_period(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
+        detector_detect_by_period(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         detector_detect_by_period(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #endif /* DETECTOR_PERIOD */
     }
