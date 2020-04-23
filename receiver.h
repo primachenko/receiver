@@ -27,6 +27,8 @@
 #define FILE_ALIGN_400    "align-400"
 #define FILE_DETECTOR_200 "detector-200"
 #define FILE_DETECTOR_400 "detector-400"
+#define FILE_BITS_200     "bits-200"
+#define FILE_BITS_400     "bits-400"
 
 #define FILE_FILTERS_PARAM "filters.txt"
 

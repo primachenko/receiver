@@ -13,26 +13,32 @@
 void dt_high_cb_freq1()
 {
     RCVR_CB("[FREQ1] HIGH");
+    dump_sample_by_desc("bits-200", DOUBLE_LOGIC_1);
 }
 void dt_low_cb_freq1()
 {
     RCVR_CB("[FREQ1] LOW");
+    dump_sample_by_desc("bits-200", DOUBLE_LOGIC_0);
 }
 void dt_undef_cb_freq1()
 {
     RCVR_CB("[FREQ1] UNDEF");
+    dump_sample_by_desc("bits-200", DOUBLE_LOGIC_UNDEF);
 }
 void dt_high_cb_freq2()
 {
-    RCVR_CB("[FREQ2] HIGH");
+    RCVR_CB("[FREQ2] LOW");
+    dump_sample_by_desc("bits-400", DOUBLE_LOGIC_0);
 }
 void dt_low_cb_freq2()
 {
-    RCVR_CB("[FREQ2] LOW");
+    RCVR_CB("[FREQ2] HIGH");
+    dump_sample_by_desc("bits-400", DOUBLE_LOGIC_1);
 }
 void dt_undef_cb_freq2()
 {
     RCVR_CB("FREQ2] UNDEF");
+    dump_sample_by_desc("bits-400", DOUBLE_LOGIC_UNDEF);
 }
 
 char * receiver_stringize_state(receiver_state_e state)
@@ -130,6 +136,8 @@ int receiver_dump_init(receiver_t * r)
     dump_fd_add("align-400",    FILE_ALIGN_400);
     dump_fd_add("detector-200", FILE_DETECTOR_200);
     dump_fd_add("detector-400", FILE_DETECTOR_400);
+    dump_fd_add("bits-200",     FILE_BITS_200);
+    dump_fd_add("bits-400",     FILE_BITS_400);
 
     return 0;
 }
