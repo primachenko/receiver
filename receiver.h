@@ -29,6 +29,7 @@
 #define FILE_DETECTOR_400 "detector-400"
 #define FILE_BITS_200     "bits-200"
 #define FILE_BITS_400     "bits-400"
+#define FILE_BITS_RESULT  "result"
 
 #define FILE_FILTERS_PARAM "filters.txt"
 
@@ -42,6 +43,7 @@
 #define ALIGN_TRASHHOLD (5.0)
 #define HIGH_TRASHHOLD_DEFAULT_PERIOD (0.3)
 #define LOW_TRASHHOLD_DEFAULT_PERIOD (0.2)
+#define AVG_PERIOD       (1100)
 #define AVG_PERIOD_FREQ1 (1000)
 #define AVG_PERIOD_FREQ2 (1000)
 
@@ -81,9 +83,12 @@ typedef struct
     filter_t * filter_freq2;
     filter_t * align_freq1;
     filter_t * align_freq2;
-
+#if defined DETECOT_PERIOD || defined DETECTOR_INTEG
     detector_t * detector_freq1;
     detector_t * detector_freq2;
+#elif defined DETECTOR_CMP
+    detector_t * detector;
+#endif
 #ifndef DEBUG_SOURCE
     pthread_t parallel_input_tid;
     queue_t * queue;

@@ -66,6 +66,30 @@ detector_t * detector_by_period_create(char * desc,
     return d;
 }
 
+detector_t * detector_cmp_create(double gist_coef,
+                                 int    init_period,
+                                 int    avg_period)
+{
+    detector_t * d = calloc(1, sizeof(detector_t));
+    if (!d)
+    {
+        DTCT_ERR("calloc failed");
+        return NULL;
+    }
+
+    d->gist_coef = gist_coef;
+    d->init_period = init_period;
+    d->avg_period = avg_period;
+    d->prev_switch = avg_period;
+    d->state = DETECTOR_INIT;
+    DTCT_DBG("cmp detector inited");
+    DTCT_DBG("gist coef: %5.5f", d->gist_coef);
+    DTCT_DBG("avg period: %d", d->avg_period);
+    DTCT_DBG("init period: %d", d->init_period);
+
+    return d;
+}
+
 void detector_set_cb(detector_t * d, detector_cb_e type, void (*recv_cb)())
 {
     switch(type)
@@ -266,4 +290,82 @@ detector_rc_e detector_detect_by_period(detector_t * d,
     }
 
     return DETECTOR_NOERROR;
+}
+
+void detector_detect_cmp(detector_t * d,
+                         double       sample_freq_low,
+                         double       sample_freq_high)
+{
+    d->samples_cnt++;
+
+    if (DETECTOR_INIT == d->state && d->samples_cnt > d->init_period)
+        d->state = DETECTOR_SEARCH_HIGH;
+
+    if (DETECTOR_INIT == d->state)
+        return;
+
+    if (d->state == DETECTOR_SEARCH_HIGH &&
+        sample_freq_low * d->gist_coef <= sample_freq_high)
+    {
+        d->state = DETECTOR_SEARCH_LOW;
+        int len = d->samples_cnt - d->prev_switch;
+        d->prev_switch = d->samples_cnt;
+        if (d->avg_period < len)
+        {
+            for (int i = 0; i < len/d->avg_period; ++i)
+            {
+                DTCT_DBG("detected high");
+                if (d->recv_low_cb)
+                {
+                    DTCT_DBG("calling recv_high_cb");
+                    d->recv_high_cb();
+                }
+            }
+            for (int j = 0; j < len; ++j)
+                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_0);
+        }
+        else
+        {
+            DTCT_DBG("detected undef");
+            for (int j = 0; j < len; ++j)
+                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_UNDEF);
+            if (d->recv_undef_cb)
+            {
+                DTCT_DBG("calling recv_undef_cb");
+                d->recv_undef_cb();
+            }
+        }
+    }
+    else if (d->state == DETECTOR_SEARCH_LOW &&
+             sample_freq_low > sample_freq_high * d->gist_coef)
+    {
+        d->state = DETECTOR_SEARCH_HIGH;
+        int len = d->samples_cnt - d->prev_switch;
+        d->prev_switch = d->samples_cnt;
+        if (d->avg_period < len)
+        {
+            for (int i = 0; i < len/d->avg_period; ++i)
+            {
+                DTCT_DBG("detected low");
+                if (d->recv_low_cb)
+                {
+                    DTCT_DBG("calling recv_low_cb");
+                    d->recv_low_cb();
+                }
+            }
+            for (int j = 0; j < len; ++j)
+                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_0);
+        }
+        else
+        {
+            DTCT_DBG("detected undef");
+            for (int j = 0; j < len; ++j)
+                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_UNDEF);
+            if (d->recv_undef_cb)
+            {
+                DTCT_DBG("calling recv_undef_cb");
+                d->recv_undef_cb();
+            }
+        }
+    }
 }

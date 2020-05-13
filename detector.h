@@ -7,6 +7,7 @@
 #define HLVL_N (0.7)
 #define LLVL_N (0.3)
 #define NBIT (600)
+#define GIST_COEF_DEFAULT (1.2)
 
 #define DETECTOR_NAME_LEN (32)
 
@@ -36,6 +37,9 @@ typedef struct
     int prev_switch;
     double align;
     detector_state_e state;
+
+/* for detector cmp */
+    double gist_coef;
 
 /* callbacks for detector events */
     void (*recv_high_cb)();
@@ -68,6 +72,10 @@ detector_t * detector_by_period_create(char * desc,
                                        int    init_period,
                                        int    avg_period);
 
+detector_t * detector_cmp_create(double gist_coef,
+                                 int    init_period,
+                                 int    avg_period);
+
 void detector_set_cb(detector_t  * d,
                      detector_cb_e type,
                      void        (*recv_cb)());
@@ -84,4 +92,8 @@ detector_rc_e detector_detect_by_period(detector_t * d,
 
 detector_rc_e detectors_sync_nomalize_param(detector_t * d_freq1,
                                             detector_t * d_freq2);
+
+void detector_detect_cmp(detector_t * d,
+                         double       sample_freq_low,
+                         double       sample_freq_high);
 #endif /* DETECTOR_H */

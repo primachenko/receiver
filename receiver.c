@@ -10,6 +10,9 @@
 #include "receiver.h"
 #include "debug.h"
 
+uint8_t data[512];
+uint16_t data_idx;
+
 void dt_high_cb_freq1()
 {
     RCVR_CB("[FREQ1] HIGH");
@@ -41,6 +44,25 @@ void dt_undef_cb_freq2()
     dump_sample_by_desc("bits-400", DOUBLE_LOGIC_UNDEF);
 }
 
+void dt_high_cb()
+{
+    // RCVR_CB("[FREQ2] HIGH");
+    dump_sample_by_desc("result", DOUBLE_LOGIC_1);
+    data[data_idx++] = 1;
+}
+void dt_low_cb()
+{
+    // RCVR_CB("[FREQ2] LOW");
+    dump_sample_by_desc("result", DOUBLE_LOGIC_0);
+    data[data_idx++] = 0;
+}
+void dt_undef_cb()
+{
+    // RCVR_CB("FREQ2] UNDEF");
+    dump_sample_by_desc("result", DOUBLE_LOGIC_UNDEF);
+    data[data_idx++] = 2;
+}
+
 char * receiver_stringize_state(receiver_state_e state)
 {
     switch (state)
@@ -66,6 +88,9 @@ char * receiver_stringize_state(receiver_state_e state)
 
 void receiver_destroy(receiver_t * r)
 {
+    for (int i = 0; i < 512 && i < data_idx; ++i)
+        printf("%d", data[i]);
+    printf("\n");
     if (!r)
     {
         RCVR_DBG("reciever not created");
@@ -138,6 +163,7 @@ int receiver_dump_init(receiver_t * r)
     dump_fd_add("detector-400", FILE_DETECTOR_400);
     dump_fd_add("bits-200",     FILE_BITS_200);
     dump_fd_add("bits-400",     FILE_BITS_400);
+    dump_fd_add("result",       FILE_BITS_RESULT);
 
     return 0;
 }
@@ -184,6 +210,18 @@ int receiver_detectors_init(receiver_t * r)
         RCVR_ERR("creating detector for freq2 failed");
         return -1;
     }
+#elif defined DETECTOR_CMP
+    r->detector = detector_cmp_create(GIST_COEF_DEFAULT,
+                                      PULSES_FOR_FILTER_STABILIZATION * AVG_PERIOD,
+                                      AVG_PERIOD);
+    if (!r->detector)
+    {
+        RCVR_ERR("creating detector failed");
+        return -1;
+    }
+    detector_set_cb(r->detector, DETECTOR_HIGH_CB, dt_high_cb);
+    detector_set_cb(r->detector, DETECTOR_LOW_CB, dt_low_cb);
+    detector_set_cb(r->detector, DETECTOR_UNDEF_CB, dt_undef_cb);
 #endif
 #if defined DETECTOR_INTEG || defined DETECTOR_PERIOD
     detector_set_cb(r->detector_freq1, DETECTOR_HIGH_CB, dt_high_cb_freq1);
@@ -472,6 +510,9 @@ int receiver_loop(receiver_t * r)
         detector_detect_by_period(r->detector_freq1, r->samples[RCVR_SMPL_ALIGNED_FREQ1]);
         detector_detect_by_period(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #endif /* DETECTOR_PERIOD */
+#ifdef DETECTOR_CMP
+        detector_detect_cmp(r->detector, r->samples[RCVR_SMPL_ALIGNED_FREQ1], r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+#endif /* DETECTOR_CMP */
     }
 
     return 0;

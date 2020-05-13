@@ -14,12 +14,13 @@ add_definitions(-Wall)
 # add_definitions(-DMAIN_DEBUG)
 # add_definitions(-DQUEUE_DEBUG)
 # add_definitions(-DPAR_DEBUG)
-add_definitions(-DDEBUG_ALL)
+# add_definitions(-DDEBUG_ALL)
 
-add_definitions(-DDETECTOR_PERIOD)
+add_definitions(-DDETECTOR_CMP)
+# add_definitions(-DDETECTOR_PERIOD)
 # add_definitions(-DDETECTOR_INTEG)
 
-add_definitions(-DDAC_SHIFT)
+# add_definitions(-DDAC_SHIFT)
 
 # add_definitions(-DDEBUG_SOURCE)
 add_definitions(-DSAMPLES_LIMIT)
