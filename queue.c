@@ -64,13 +64,18 @@ int queue_push_sample(queue_t * q,
                       double    s)
 {
     pthread_mutex_lock(&q->lock);
+#ifdef SAMPLES_LIMIT
     if (QUEUE_SAMPLES_LEN_MAX < q->in_counter)
     {
         QUEUE_DBG("queue is full");
         pthread_mutex_unlock(&q->lock);
         return -1;
     }
-
+#else
+    if (QUEUE_SAMPLES_LEN_MAX == q->in_counter)
+        q->in_counter = 0;
+    QUEUE_DBG("queue in counter loop");
+#endif /* SAMPLES_LIMIT */
     q->samples[q->in_counter] = s;
     q->in_counter++;
     pthread_mutex_unlock(&q->lock);
@@ -81,6 +86,7 @@ int queue_push_sample(queue_t * q,
 double queue_pop_sample(queue_t * q)
 {
     pthread_mutex_lock(&q->lock);
+#ifdef SAMPLES_LIMIT
     if (q->out_counter > q->in_counter)
     {
         QUEUE_DBG("queue is empty");
@@ -88,7 +94,11 @@ double queue_pop_sample(queue_t * q)
         usleep(QUEUE_DELAY_TIME_US);
         return FP_INFINITE;
     }
-
+#else
+    if (QUEUE_SAMPLES_LEN_MAX == q->out_counter)
+        q->out_counter = 0;
+    QUEUE_DBG("queue out counter loop");
+#endif /* SAMPLES_LIMIT */
     double val = q->samples[q->out_counter];
     q->out_counter++;
     pthread_mutex_unlock(&q->lock);

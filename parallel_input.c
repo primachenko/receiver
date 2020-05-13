@@ -26,8 +26,11 @@ void * parallel_input_routine(void * cookie)
     queue_t * q = cookie;
 
     double val;
-
+#ifdef SAMPLES_LIMIT
     while (QUEUE_SAMPLES_LEN_MAX >= q->in_counter)
+#else
+    while (1)
+#endif /* SAMPLES_LIMIT */
     {
         val = ADS1256_GetValueRDATAC() * ADS1256_MAX_VAL / ADS1256_MAX_BIT_VAL;
         if (0 != queue_push_sample(q, val))
@@ -36,7 +39,9 @@ void * parallel_input_routine(void * cookie)
             break;
         }
     }
+#ifdef SAMPLES_LIMIT
     PAR_DBG("routine exit, received %d samples", QUEUE_SAMPLES_LEN_MAX);
+#endif /* SAMPLES_LIMIT */
     return NULL;
 }
 

@@ -10,7 +10,7 @@
 #include "receiver.h"
 #include "debug.h"
 
-uint8_t data[512];
+uint8_t data[65535];
 uint16_t data_idx;
 
 void dt_high_cb_freq1()
@@ -88,7 +88,7 @@ char * receiver_stringize_state(receiver_state_e state)
 
 void receiver_destroy(receiver_t * r)
 {
-    for (int i = 0; i < 512 && i < data_idx; ++i)
+    for (int i = 0; i < 65535 && i < data_idx; ++i)
         printf("%d", data[i]);
     printf("\n");
     if (!r)
