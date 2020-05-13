@@ -116,7 +116,7 @@ static char byte2ascii(uint8_t * data)
 
 #define PREAMBLE_SEQUENCE (0xAB)
 
-static void receiver_get_data_str()
+static void receiver_get_data_str(receiver_t * r)
 {
     char buffer[DATA_BITS_SIZE] = {};
     int rc = 0;
@@ -142,9 +142,11 @@ static void receiver_get_data_str()
     } while (1);
 
     RCVR_DATA("receiver decoded ascii data:\n%s", buffer);
+    RCVR_LOG_EXT("receiver decoded ascii data:\n%s", buffer);
+    sleep(2); /* for demo */
 }
 
-static void receiver_get_bits()
+static void receiver_get_bits(receiver_t * r)
 {
     char buffer[DATA_BITS_SIZE] = {};
     int rc = 0;
@@ -168,8 +170,8 @@ void receiver_destroy(receiver_t * r)
     r->state = RCVR_DESTROYING;
     RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
 
-    receiver_get_bits();
-    receiver_get_data_str();
+    receiver_get_bits(r);
+    receiver_get_data_str(r);
 
     if (r->filter_50hz)
     {
@@ -209,6 +211,13 @@ void receiver_destroy(receiver_t * r)
     }
 #endif /* DETECTOR_INTEG || DETECTOR_PERIOD */
     dump_destroy();
+#ifdef LOG_EXTERNAL
+    RCVR_LOG_EXT("ext log deinit");
+    sleep(5); /* for demo */
+    RCVR_LOG_EXT("done");
+    RCVR_LOG_EXT("dieLogEx");
+    pclose(r->efd);
+#endif /* LOG_EXTERNAL */
 #ifndef DEBUG_SOURCE
     queue_destroy(r->queue);
     if (r->parallel_input_tid)
@@ -406,6 +415,16 @@ int receiver_create(receiver_t ** rcvr)
         return -1;
     }
 
+#ifdef LOG_EXTERNAL
+    r->efd = popen("./logExternal.py", "w");
+    if (!r->efd)
+    {
+        RCVR_ERR("log external init failed");
+        receiver_destroy(r);
+        return -1;
+    }
+    RCVR_LOG_EXT("ext log init OK");
+#endif /* LOG_EXTERNAL */
     if (0 != receiver_filters_init(r))
     {
         RCVR_ERR("filters init failed");
@@ -419,37 +438,36 @@ int receiver_create(receiver_t ** rcvr)
         receiver_destroy(r);
         return -1;
     }
-    RCVR_DBG("detectors init success");
 #ifndef DEBUG_SOURCE
     if (0 != queue_create(&r->queue))
     {
         RCVR_ERR("queue init failed");
+        RCVR_LOG_EXT("queue init ERR");
         receiver_destroy(r);
         return -1;
     }
-
     if (0 != parallel_input_init())
     {
         RCVR_ERR("parallel input init failed");
         receiver_destroy(r);
         return -1;
     }
-
     if (0 != pthread_create(&r->parallel_input_tid, NULL, parallel_input_routine, r->queue))
     {
         RCVR_ERR("parallel input thread create failed");
         receiver_destroy(r);
         return -1;
     }
-
-     struct sched_param params;
-     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-     if (0 != pthread_setschedparam(r->parallel_input_tid, SCHED_FIFO, &params))
+    RCVR_LOG_EXT("in thread start");
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    if (0 != pthread_setschedparam(r->parallel_input_tid, SCHED_FIFO, &params))
     {
         RCVR_ERR("set realrime prio for parallel input thread failed");
         receiver_destroy(r);
         return -1;
     }
+    RCVR_LOG_EXT("thread prio OK");
 #endif /* DEBUG_SOURCE */
 
     r->state = RCVR_INIT;
@@ -457,6 +475,7 @@ int receiver_create(receiver_t ** rcvr)
 
     *rcvr = r;
 
+    RCVR_LOG_EXT("rcvr create OK");
     RCVR_DBG("receiver was created");
 
     return 0;
@@ -504,6 +523,7 @@ int receiver_init_process(receiver_t * r)
 
 int receiver_loop(receiver_t * r)
 {
+    RCVR_LOG_EXT("loop stared");
     for (;RCVR_STOPPED != r->state;)
     {
         if (RCVR_PAUSED == r->state)
@@ -531,6 +551,7 @@ int receiver_loop(receiver_t * r)
         r->samples[RCVR_SMPL_SOURCE] = queue_pop_sample(r->queue);
         if (FP_INFINITE == r->samples[RCVR_SMPL_SOURCE])
         {
+            RCVR_LOG_EXT("wait new data");
             RCVR_DBG("sample %llu is INF, wait new samples", r->samples_cnt);
             continue;
         }

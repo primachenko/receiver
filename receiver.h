@@ -75,9 +75,9 @@ typedef enum
 
 typedef struct
 {
-    // dump_t * dump;
-    // import_t * import;
-
+#ifdef LOG_EXTERNAL
+    FILE * efd;
+#endif /* LOG_EXTERNAL */
     filter_t * filter_50hz;
     filter_t * filter_freq1;
     filter_t * filter_freq2;

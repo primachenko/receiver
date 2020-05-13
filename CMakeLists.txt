@@ -20,6 +20,8 @@ add_definitions(-DDETECTOR_CMP)
 # add_definitions(-DDETECTOR_PERIOD)
 # add_definitions(-DDETECTOR_INTEG)
 
+add_definitions(-DLOG_EXTERNAL)
+
 # add_definitions(-DDAC_SHIFT)
 
 # add_definitions(-DDEBUG_SOURCE)

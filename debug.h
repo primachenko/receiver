@@ -24,6 +24,18 @@
 #define RCVR_ERR(__info__,...) { fprintf(stderr, "[RCVR-ERR]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
 #define RCVR_CB(__info__,...) { fprintf(stderr, "[RCVR-CB]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
 #define RCVR_DATA(__info__,...) { fprintf(stderr, "[RCVR-DATA]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
+#ifdef LOG_EXTERNAL
+    #define RCVR_LOG_EXT(__info__,...) \
+    do \
+    { \
+        fprintf(r->efd, __info__, ##__VA_ARGS__); \
+        fprintf(r->efd, "\n"); \
+        fflush(r->efd); \
+    } \
+    while (0)
+#else
+    #define RCVR_LOG_EXT(__info__,...)
+#endif /* LOG_EXTERNAL */
 
 #if DUMP_DEBUG | DEBUG_ALL
     #define DMP_DBG(__info__,...) { fprintf(stderr, "[DMP-DBG]: <%s> %d: " __info__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fprintf(stderr, "\n"); }
