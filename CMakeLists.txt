@@ -8,7 +8,7 @@ include_directories(libads1256/include)
 add_definitions(-Wall)
 
 # add_definitions(-DDETECTOR_DEBUG)
-# add_definitions(-DRECEIVER_DEBUG)
+add_definitions(-DRECEIVER_DEBUG)
 # add_definitions(-DDUMP_DEBUG)
 # add_definitions(-DIMPORT_DEBUG)
 # add_definitions(-DMAIN_DEBUG)

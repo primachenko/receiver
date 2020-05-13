@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#define QUEUE_SAMPLES_LEN_MAX (1024*64)
+#define QUEUE_SAMPLES_LEN_MAX (1024*256)
 #define QUEUE_DELAY_TIME_US (300)
 
 typedef struct

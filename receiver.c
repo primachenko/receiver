@@ -10,7 +10,9 @@
 #include "receiver.h"
 #include "debug.h"
 
-uint8_t data[65535];
+#define DATA_BITS_SIZE (65535)
+
+uint8_t data[DATA_BITS_SIZE];
 uint16_t data_idx;
 
 void dt_high_cb_freq1()
@@ -60,7 +62,7 @@ void dt_undef_cb()
 {
     // RCVR_CB("FREQ2] UNDEF");
     dump_sample_by_desc("result", DOUBLE_LOGIC_UNDEF);
-    data[data_idx++] = 2;
+    // data[data_idx++] = 2;
 }
 
 char * receiver_stringize_state(receiver_state_e state)
@@ -86,11 +88,78 @@ char * receiver_stringize_state(receiver_state_e state)
     }
 }
 
+static int search_byte(uint8_t need, uint8_t * data, int size)
+{
+    for (int i = 0; i < size - 7; ++i)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            if (((need >> (7 - j)) & 0x01) != data[i+j])
+                break;
+            if (j == 7)
+                return i + 8;
+        }
+    }
+    return -1;
+}
+
+static char byte2ascii(uint8_t * data)
+{
+    char ch = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        ch |= data[i] << (7 - i);
+    }
+
+    return ch;
+}
+
+#define PREAMBLE_SEQUENCE (0xAB)
+
+static void receiver_get_data_str()
+{
+    char buffer[DATA_BITS_SIZE] = {};
+    int rc = 0;
+    int idx = 0;
+    char ch;
+    do
+    {
+        int new_idx = search_byte(PREAMBLE_SEQUENCE, &data[idx], data_idx - idx);
+        if (-1 == new_idx)
+            break;
+        rc += sprintf(buffer + rc, "\t");
+        for (; idx + new_idx < data_idx; new_idx += 8)
+        {
+            ch = byte2ascii(&data[idx + new_idx]);
+            if (0 == ch)
+                break;
+            rc += sprintf(buffer + rc, "%c", ch);
+        }
+        if (idx + new_idx + 8 > data_idx)
+            rc += sprintf(buffer + rc - 1, "<interrupted>");
+        rc += sprintf(buffer + rc, "\n");
+        idx += new_idx;
+    } while (1);
+
+    RCVR_DATA("receiver decoded ascii data:\n%s", buffer);
+}
+
+static void receiver_get_bits()
+{
+    char buffer[DATA_BITS_SIZE] = {};
+    int rc = 0;
+    rc += sprintf(buffer + rc, "\t");
+    for (int i = 0; i < DATA_BITS_SIZE && i < data_idx; ++i)
+    {
+        rc += sprintf(buffer + rc, "%d", data[i]);
+        if (0 == (i + 1) % 8)
+            rc += sprintf(buffer + rc, "\n\t");
+    }
+    RCVR_DATA("receiver binary data:\n%s", buffer);
+}
+
 void receiver_destroy(receiver_t * r)
 {
-    for (int i = 0; i < 65535 && i < data_idx; ++i)
-        printf("%d", data[i]);
-    printf("\n");
     if (!r)
     {
         RCVR_DBG("reciever not created");
@@ -98,6 +167,9 @@ void receiver_destroy(receiver_t * r)
     }
     r->state = RCVR_DESTROYING;
     RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
+
+    receiver_get_bits();
+    receiver_get_data_str();
 
     if (r->filter_50hz)
     {
