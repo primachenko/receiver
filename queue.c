@@ -73,8 +73,10 @@ int queue_push_sample(queue_t * q,
     }
 #else
     if (QUEUE_SAMPLES_LEN_MAX == q->in_counter)
+    {
         q->in_counter = 0;
-    QUEUE_DBG("queue in counter loop");
+        QUEUE_DBG("queue in counter loop");
+    }
 #endif /* SAMPLES_LIMIT */
     q->samples[q->in_counter] = s;
     q->in_counter++;
@@ -96,8 +98,10 @@ double queue_pop_sample(queue_t * q)
     }
 #else
     if (QUEUE_SAMPLES_LEN_MAX == q->out_counter)
+    {
         q->out_counter = 0;
-    QUEUE_DBG("queue out counter loop");
+        QUEUE_DBG("queue out counter loop");
+    }
 #endif /* SAMPLES_LIMIT */
     double val = q->samples[q->out_counter];
     q->out_counter++;

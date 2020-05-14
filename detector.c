@@ -90,7 +90,7 @@ detector_t * detector_cmp_create(double gist_coef,
     return d;
 }
 
-void detector_set_cb(detector_t * d, detector_cb_e type, void (*recv_cb)())
+void detector_set_cb(detector_t * d, detector_cb_e type, void (*recv_cb)(void * cookie))
 {
     switch(type)
     {
@@ -138,7 +138,7 @@ void detector_destroy(detector_t * d)
     free(d);
     d = NULL;
 }
-
+#ifdef DETECTOR_INGEG
 void detector_detect_by_integr(detector_t * d, double sample)
 {
     d->storage += sample;
@@ -181,7 +181,8 @@ void detector_detect_by_integr(detector_t * d, double sample)
         d->storage = 0;
     }
 }
-
+#endif /* DETECTOR_INTEG */
+#ifdef DETECTOR_PERIOD
 detector_rc_e detector_detect_by_period(detector_t * d,
                                         double       sample)
 {
@@ -291,8 +292,10 @@ detector_rc_e detector_detect_by_period(detector_t * d,
 
     return DETECTOR_NOERROR;
 }
-
+#endif /* DETECTOR_PERIOD */
+#ifdef DETECTOR_CMP
 void detector_detect_cmp(detector_t * d,
+                         void       * cookie,
                          double       sample_freq_low,
                          double       sample_freq_high)
 {
@@ -318,7 +321,7 @@ void detector_detect_cmp(detector_t * d,
                 if (d->recv_low_cb)
                 {
                     DTCT_DBG("calling recv_high_cb");
-                    d->recv_high_cb();
+                    d->recv_high_cb(cookie);
                 }
             }
             for (int j = 0; j < len; ++j)
@@ -332,7 +335,7 @@ void detector_detect_cmp(detector_t * d,
             if (d->recv_undef_cb)
             {
                 DTCT_DBG("calling recv_undef_cb");
-                d->recv_undef_cb();
+                d->recv_undef_cb(cookie);
             }
         }
     }
@@ -350,7 +353,7 @@ void detector_detect_cmp(detector_t * d,
                 if (d->recv_low_cb)
                 {
                     DTCT_DBG("calling recv_low_cb");
-                    d->recv_low_cb();
+                    d->recv_low_cb(cookie);
                 }
             }
             for (int j = 0; j < len; ++j)
@@ -364,8 +367,9 @@ void detector_detect_cmp(detector_t * d,
             if (d->recv_undef_cb)
             {
                 DTCT_DBG("calling recv_undef_cb");
-                d->recv_undef_cb();
+                d->recv_undef_cb(cookie);
             }
         }
     }
 }
+#endif /* DETECTOR_CMP */

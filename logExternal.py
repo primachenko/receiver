@@ -37,3 +37,4 @@ while 1:
 		draw.text((0, 20), text=str(str1), fill="white", font=font)
 		draw.text((0, 10), text=str(str2), fill="white", font=font)
 		draw.text((0, 0), text=str(str3), fill="white", font=font)
+	# time.sleep(0.2);

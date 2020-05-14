@@ -9,11 +9,11 @@ add_definitions(-Wall)
 
 # add_definitions(-DDETECTOR_DEBUG)
 add_definitions(-DRECEIVER_DEBUG)
-# add_definitions(-DDUMP_DEBUG)
-# add_definitions(-DIMPORT_DEBUG)
-# add_definitions(-DMAIN_DEBUG)
-# add_definitions(-DQUEUE_DEBUG)
-# add_definitions(-DPAR_DEBUG)
+add_definitions(-DDUMP_DEBUG)
+add_definitions(-DIMPORT_DEBUG)
+add_definitions(-DMAIN_DEBUG)
+add_definitions(-DQUEUE_DEBUG)
+add_definitions(-DPAR_DEBUG)
 # add_definitions(-DDEBUG_ALL)
 
 add_definitions(-DDETECTOR_CMP)
@@ -25,7 +25,7 @@ add_definitions(-DLOG_EXTERNAL)
 # add_definitions(-DDAC_SHIFT)
 
 # add_definitions(-DDEBUG_SOURCE)
-add_definitions(-DSAMPLES_LIMIT)
+# add_definitions(-DSAMPLES_LIMIT)
 
 set(SRC
     main.c

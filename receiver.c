@@ -11,58 +11,136 @@
 #include "debug.h"
 
 #define DATA_BITS_SIZE (65535)
+#define PREAMBLE_SEQUENCE (0xAB)
 
-uint8_t data[DATA_BITS_SIZE];
+uint8_t data[DATA_BITS_SIZE+1];
 uint16_t data_idx;
 
-void dt_high_cb_freq1()
+static int search_byte(uint8_t need, uint8_t * data, int size)
+{
+    for (int i = 0; i < size - 7; ++i)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            if (((need >> (7 - j)) & 0x01) != data[i+j])
+                break;
+            if (j == 7)
+                return i + 8;
+        }
+    }
+    return -1;
+}
+
+static char byte2ascii(uint8_t * data)
+{
+    char ch = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        // RCVR_DBG("%d", data[i]);
+        ch |= data[i] << (7 - i);
+    }
+    // RCVR_DBG("b = '%c'\n", ch);
+
+    return ch;
+}
+
+static void receiver_get_data_str(receiver_t * r)
+{
+    static int idx = 0;
+    static int new_idx = 0;
+    static char buffer[DATA_BITS_SIZE] = {};
+    static int rc = 0;
+    static uint64_t bytes_cnt = 0;
+
+    static int search_preamble = 1;
+    // RCVR_DBG("data_idx=%d", data_idx);
+    if (search_preamble)
+    {
+        if (idx + 8 > data_idx)
+            return;
+
+        new_idx = search_byte(PREAMBLE_SEQUENCE, &data[idx], data_idx - idx);
+        if (-1 == new_idx)
+            return;
+        idx += new_idx;
+        search_preamble = 0;
+        rc += sprintf(buffer + rc, "\t");
+        // RCVR_DBG("preamble founded, data begin from idx = %d", idx + new_idx);
+    }
+    else
+    {
+        if (idx + 8 > data_idx)
+        {
+            // RCVR_DBG(" need more bits, skip");
+            return;
+        }
+
+        // RCVR_DBG("ascii search from idx = %d", idx);
+        char ch = byte2ascii(&data[idx]);
+        idx += 8;
+        bytes_cnt++;
+        if (0 == ch)
+        {
+            search_preamble = 1;
+            rc = 0;
+            // RCVR_DBG("end data, search new preamble from idx = %d", idx);
+            RCVR_DATA("receiver decoded ascii data:\n%s", buffer);
+            RCVR_LOG_EXT("%s <- %llu", buffer, bytes_cnt);
+            return;
+        }
+        rc += sprintf(buffer + rc, "%c", ch);
+    }
+}
+
+void dt_high_cb_freq1(void * cookie)
 {
     RCVR_CB("[FREQ1] HIGH");
     dump_sample_by_desc("bits-200", DOUBLE_LOGIC_1);
 }
-void dt_low_cb_freq1()
+void dt_low_cb_freq1(void * cookie)
 {
     RCVR_CB("[FREQ1] LOW");
     dump_sample_by_desc("bits-200", DOUBLE_LOGIC_0);
 }
-void dt_undef_cb_freq1()
+void dt_undef_cb_freq1(void * cookie)
 {
     RCVR_CB("[FREQ1] UNDEF");
     dump_sample_by_desc("bits-200", DOUBLE_LOGIC_UNDEF);
 }
-void dt_high_cb_freq2()
+void dt_high_cb_freq2(void * cookie)
 {
     RCVR_CB("[FREQ2] LOW");
     dump_sample_by_desc("bits-400", DOUBLE_LOGIC_0);
 }
-void dt_low_cb_freq2()
+void dt_low_cb_freq2(void * cookie)
 {
     RCVR_CB("[FREQ2] HIGH");
     dump_sample_by_desc("bits-400", DOUBLE_LOGIC_1);
 }
-void dt_undef_cb_freq2()
+void dt_undef_cb_freq2(void * cookie)
 {
     RCVR_CB("FREQ2] UNDEF");
     dump_sample_by_desc("bits-400", DOUBLE_LOGIC_UNDEF);
 }
 
-void dt_high_cb()
+void dt_high_cb(void * cookie)
 {
-    // RCVR_CB("[FREQ2] HIGH");
     dump_sample_by_desc("result", DOUBLE_LOGIC_1);
     data[data_idx++] = 1;
+    receiver_get_data_str(cookie);
 }
-void dt_low_cb()
+void dt_low_cb(void * cookie)
 {
-    // RCVR_CB("[FREQ2] LOW");
     dump_sample_by_desc("result", DOUBLE_LOGIC_0);
     data[data_idx++] = 0;
+    receiver_get_data_str(cookie);
 }
-void dt_undef_cb()
+void dt_undef_cb(void * cookie)
 {
-    // RCVR_CB("FREQ2] UNDEF");
+    RCVR_CB("UNDEF value, use random data");
     dump_sample_by_desc("result", DOUBLE_LOGIC_UNDEF);
-    // data[data_idx++] = 2;
+    data[data_idx++] = (int)(rand()/(RAND_MAX/2));
+    receiver_get_data_str(cookie);
 }
 
 char * receiver_stringize_state(receiver_state_e state)
@@ -88,78 +166,6 @@ char * receiver_stringize_state(receiver_state_e state)
     }
 }
 
-static int search_byte(uint8_t need, uint8_t * data, int size)
-{
-    for (int i = 0; i < size - 7; ++i)
-    {
-        for (int j = 0; j < 8; ++j)
-        {
-            if (((need >> (7 - j)) & 0x01) != data[i+j])
-                break;
-            if (j == 7)
-                return i + 8;
-        }
-    }
-    return -1;
-}
-
-static char byte2ascii(uint8_t * data)
-{
-    char ch = 0;
-    for (int i = 0; i < 8; ++i)
-    {
-        ch |= data[i] << (7 - i);
-    }
-
-    return ch;
-}
-
-#define PREAMBLE_SEQUENCE (0xAB)
-
-static void receiver_get_data_str(receiver_t * r)
-{
-    char buffer[DATA_BITS_SIZE] = {};
-    int rc = 0;
-    int idx = 0;
-    char ch;
-    do
-    {
-        int new_idx = search_byte(PREAMBLE_SEQUENCE, &data[idx], data_idx - idx);
-        if (-1 == new_idx)
-            break;
-        rc += sprintf(buffer + rc, "\t");
-        for (; idx + new_idx < data_idx; new_idx += 8)
-        {
-            ch = byte2ascii(&data[idx + new_idx]);
-            if (0 == ch)
-                break;
-            rc += sprintf(buffer + rc, "%c", ch);
-        }
-        if (idx + new_idx + 8 > data_idx)
-            rc += sprintf(buffer + rc - 1, "<interrupted>");
-        rc += sprintf(buffer + rc, "\n");
-        idx += new_idx;
-    } while (1);
-
-    RCVR_DATA("receiver decoded ascii data:\n%s", buffer);
-    RCVR_LOG_EXT("receiver decoded ascii data:\n%s", buffer);
-    sleep(2); /* for demo */
-}
-
-static void receiver_get_bits(receiver_t * r)
-{
-    char buffer[DATA_BITS_SIZE] = {};
-    int rc = 0;
-    rc += sprintf(buffer + rc, "\t");
-    for (int i = 0; i < DATA_BITS_SIZE && i < data_idx; ++i)
-    {
-        rc += sprintf(buffer + rc, "%d", data[i]);
-        if (0 == (i + 1) % 8)
-            rc += sprintf(buffer + rc, "\n\t");
-    }
-    RCVR_DATA("receiver binary data:\n%s", buffer);
-}
-
 void receiver_destroy(receiver_t * r)
 {
     if (!r)
@@ -169,9 +175,6 @@ void receiver_destroy(receiver_t * r)
     }
     r->state = RCVR_DESTROYING;
     RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
-
-    receiver_get_bits(r);
-    receiver_get_data_str(r);
 
     if (r->filter_50hz)
     {
@@ -213,7 +216,7 @@ void receiver_destroy(receiver_t * r)
     dump_destroy();
 #ifdef LOG_EXTERNAL
     RCVR_LOG_EXT("ext log deinit");
-    sleep(5); /* for demo */
+    sleep(10); /* for demo */
     RCVR_LOG_EXT("done");
     RCVR_LOG_EXT("dieLogEx");
     pclose(r->efd);
@@ -432,6 +435,8 @@ int receiver_create(receiver_t ** rcvr)
         return -1;
     }
 
+    srand(time(NULL));
+
     if (0 != receiver_detectors_init(r))
     {
         RCVR_ERR("detectors init failed");
@@ -523,7 +528,7 @@ int receiver_init_process(receiver_t * r)
 
 int receiver_loop(receiver_t * r)
 {
-    RCVR_LOG_EXT("loop stared");
+    RCVR_LOG_EXT("loop started");
     for (;RCVR_STOPPED != r->state;)
     {
         if (RCVR_PAUSED == r->state)
@@ -536,6 +541,7 @@ int receiver_loop(receiver_t * r)
         if (QUEUE_SAMPLES_LEN_MAX <= r->samples_cnt)
         {
             r->state = RCVR_STOPPED;
+            RCVR_LOG_EXT("limit reached");
             RCVR_DBG("samples limit was reached");
             RCVR_DBG("receiver change state to %s", receiver_stringize_state(r->state));
             break;
@@ -604,7 +610,7 @@ int receiver_loop(receiver_t * r)
         detector_detect_by_period(r->detector_freq2, r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #endif /* DETECTOR_PERIOD */
 #ifdef DETECTOR_CMP
-        detector_detect_cmp(r->detector, r->samples[RCVR_SMPL_ALIGNED_FREQ1], r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
+        detector_detect_cmp(r->detector, r, r->samples[RCVR_SMPL_ALIGNED_FREQ1], r->samples[RCVR_SMPL_ALIGNED_FREQ2]);
 #endif /* DETECTOR_CMP */
     }
 
