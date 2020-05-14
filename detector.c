@@ -313,30 +313,19 @@ void detector_detect_cmp(detector_t * d,
         d->state = DETECTOR_SEARCH_LOW;
         int len = d->samples_cnt - d->prev_switch;
         d->prev_switch = d->samples_cnt;
-        if (d->avg_period < len)
+        if (d->avg_period/2 < len)
         {
             for (int i = 0; i < len/d->avg_period; ++i)
             {
-                DTCT_DBG("detected high");
+                // DTCT_DBG("detected high");
                 if (d->recv_low_cb)
                 {
-                    DTCT_DBG("calling recv_high_cb");
+                    // DTCT_DBG("calling recv_high_cb");
                     d->recv_high_cb(cookie);
                 }
             }
             for (int j = 0; j < len; ++j)
                 dump_sample_by_desc("detector-200", DOUBLE_LOGIC_0);
-        }
-        else
-        {
-            DTCT_DBG("detected undef");
-            for (int j = 0; j < len; ++j)
-                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_UNDEF);
-            if (d->recv_undef_cb)
-            {
-                DTCT_DBG("calling recv_undef_cb");
-                d->recv_undef_cb(cookie);
-            }
         }
     }
     else if (d->state == DETECTOR_SEARCH_LOW &&
@@ -345,30 +334,19 @@ void detector_detect_cmp(detector_t * d,
         d->state = DETECTOR_SEARCH_HIGH;
         int len = d->samples_cnt - d->prev_switch;
         d->prev_switch = d->samples_cnt;
-        if (d->avg_period < len)
+        if (d->avg_period/2 < len)
         {
             for (int i = 0; i < len/d->avg_period; ++i)
             {
-                DTCT_DBG("detected low");
+                // DTCT_DBG("detected low");
                 if (d->recv_low_cb)
                 {
-                    DTCT_DBG("calling recv_low_cb");
+                    // DTCT_DBG("calling recv_low_cb");
                     d->recv_low_cb(cookie);
                 }
             }
             for (int j = 0; j < len; ++j)
                 dump_sample_by_desc("detector-200", DOUBLE_LOGIC_0);
-        }
-        else
-        {
-            DTCT_DBG("detected undef");
-            for (int j = 0; j < len; ++j)
-                dump_sample_by_desc("detector-200", DOUBLE_LOGIC_UNDEF);
-            if (d->recv_undef_cb)
-            {
-                DTCT_DBG("calling recv_undef_cb");
-                d->recv_undef_cb(cookie);
-            }
         }
     }
 }

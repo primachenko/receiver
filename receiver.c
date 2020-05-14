@@ -84,7 +84,7 @@ static void receiver_get_data_str(receiver_t * r)
             search_preamble = 1;
             rc = 0;
             // RCVR_DBG("end data, search new preamble from idx = %d", idx);
-            RCVR_DATA("receiver decoded ascii data:\n%s", buffer);
+            RCVR_DATA("receiver decoded ascii data:\n%s <- %llu", buffer, bytes_cnt);
             RCVR_LOG_EXT("%s <- %llu", buffer, bytes_cnt);
             return;
         }
